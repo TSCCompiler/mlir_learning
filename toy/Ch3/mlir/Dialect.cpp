@@ -247,6 +247,15 @@ static mlir::LogicalResult verify(TransposeOp op) {
   return mlir::success();
 }
 
+
+//===----------------------------------------------------------------------===//
+// ConvOp
+void ConvOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
+                   mlir::Value input, mlir::Value wgt) {
+    state.addTypes(UnrankedTensorType::get(builder.getF64Type()));
+    state.addOperands({input, wgt});
+}
+
 //===----------------------------------------------------------------------===//
 // TableGen'd op method definitions
 //===----------------------------------------------------------------------===//

@@ -22,6 +22,7 @@
 #include "mlir/Pass/Pass.h"
 #include "mlir/Pass/PassManager.h"
 #include "mlir/Transforms/Passes.h"
+#include "mlir/IR/Operation.h"
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/CommandLine.h"
@@ -112,6 +113,24 @@ int dumpMLIR() {
   if (int error = loadMLIR(sourceMgr, context, module))
     return error;
 
+  //walk through module
+    mlir::Operation* top_op = *module;
+    mlir::Operation* cloned = top_op->clone();
+    cloned->walk<mlir::WalkOrder::PostOrder>([](mlir::Operation* op) {
+        llvm::outs() << "op '" << op->getName() << "'\n";
+        int num_operands = op->getNumOperands();
+        for (int i = 0; i < num_operands; ++i) {
+            auto& operands = op->getOpOperand(i);
+            auto* op_def = operands.get().getDefiningOp();
+            if (op_def){
+                llvm::outs()<<"\t operand " << i << " : " << op_def->getName()<<"\n";
+            }else{
+                auto op_type = operands.get().getType();
+                llvm::outs()<<"\t operand " << i << " : " << op_type            <<"\n";
+            }
+
+        }
+    });
   if (enableOpt) {
     mlir::PassManager pm(&context);
     // Apply any generic pass manager command line options and run the pipeline.
@@ -119,6 +138,9 @@ int dumpMLIR() {
 
     // Add a run of the canonicalizer to optimize the mlir module.
     pm.addNestedPass<mlir::FuncOp>(mlir::createCanonicalizerPass());
+
+
+
     if (mlir::failed(pm.run(*module)))
       return 4;
   }

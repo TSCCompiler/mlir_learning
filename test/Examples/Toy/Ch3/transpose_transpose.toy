@@ -2,7 +2,9 @@
 
 # User defined generic function that operates on unknown shaped arguments
 def transpose_transpose(x) {
-  return transpose(transpose(x));
+    var a = transpose(x);
+    var b = conv(a, x);
+  return transpose(a);
 }
 
 def main() {

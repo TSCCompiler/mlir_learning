@@ -246,4 +246,21 @@ def TransposeOp : Toy_Op<"transpose"> {
   let verifier = [{ return ::verify(*this); }];
 }
 
+
+def ConvOp : Toy_Op<"conv"> {
+    let summary = "convlution operation";
+
+    let arguments = (ins F64Tensor:$input, F64Tensor:$wgt);
+
+    let results = (outs F64Tensor);
+
+let assemblyFormat = [{
+        `(` $input `:` type($input)  $wgt `:` type($wgt) `)` attr-dict `to` type(results)
+    }];
+
+    let builders = [
+            OpBuilder<(ins "Value":$input, "Value":$wgt)>
+            ];
+}
+
 #endif // TOY_OPS
