@@ -11,12 +11,16 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <llvm/Support/Debug.h>
+#include <iostream>
 #include "toy/Dialect.h"
 
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinTypes.h"
 #include "mlir/IR/OpImplementation.h"
 #include "mlir/Transforms/InliningUtils.h"
+
+#define DEBUG_TYPE "dialect"
 
 using namespace mlir;
 using namespace mlir::toy;
@@ -347,6 +351,37 @@ static mlir::LogicalResult verify(TransposeOp op) {
            << "expected result shape to be a transpose of the input";
   }
   return mlir::success();
+}
+
+
+//===----------------------------------------------------------------------===//
+// ConvOp
+void ConvOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
+                   mlir::Value input, mlir::Value wgt) {
+    state.addTypes(UnrankedTensorType::get(builder.getF64Type()));
+    state.addOperands({input, wgt});
+}
+
+void ConvOp::inferShapes() {
+    auto arrayInp = getOperand(0).getType().cast<RankedTensorType>();
+    auto arrayWgt = getOperand(1).getType().cast<RankedTensorType>();
+    auto szY = arrayInp.getShape()[0];
+    auto szX = arrayInp.getShape()[1];
+    auto szC = arrayInp.getShape()[2];
+    int64_t outC = *arrayWgt.getShape().begin();
+    int64_t inC = *arrayWgt.getShape().rbegin();
+    SmallVector<int64_t, 3> dims({szY, szX, outC});
+    auto ret_type = getResult().getType();
+
+    LLVM_DEBUG(llvm::dbgs() << "before Inferring shape result type : " << ret_type << "\n");
+    if (ret_type.isa<UnrankedTensorType>())
+    {
+        llvm::dbgs() << "before Inferring shape result type : " << ret_type << "\n";
+    } else {
+        llvm::dbgs() << "it is not unranked tensor type";
+    }
+    getResult().setType(RankedTensorType::get(dims, arrayInp.getElementType()));
+
 }
 
 //===----------------------------------------------------------------------===//
